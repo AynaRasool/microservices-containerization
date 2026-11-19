@@ -1,0 +1,13 @@
+
+{
+  "name": "backend-service",
+  "version": "1.0.0",
+  "description": "Backend JSON API microservice for Week 1 internship",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

@@ -1,0 +1,13 @@
+
+{
+  "name": "frontend-service",
+  "version": "1.0.0",
+  "description": "Frontend microservice for Week 1 internship",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
