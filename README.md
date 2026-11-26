@@ -1,6 +1,6 @@
 # Microservices & Containerization
 
-## Week 1 – Microservices & Containerization Foundation
+# Week 1 – Microservices & Containerization Foundation
 
 ## 1. Project Overview
 
@@ -11,7 +11,7 @@ The project consists of:
 - **Frontend Service:** An HTTP service that provides health-check and service information endpoints.
 - **Backend Service:** A JSON API that provides health-check and service information endpoints.
 
-Each service has its own source code, dependencies, Dockerfile, and Docker image. Both services run independently in separate Docker containers.
+Each service has its own source code, dependencies, Dockerfile, and Docker image. Both services can run independently in separate Docker containers.
 
 ## 2. Architecture
 
@@ -66,6 +66,21 @@ Microservices-Containerization/
 │       ├── .dockerignore
 │       ├── package.json
 │       └── package-lock.json
+│
+├── helm/
+│   └── microservices/
+│       ├── Chart.yaml
+│       ├── values.yaml
+│       └── templates/
+│           ├── frontend-deployment.yaml
+│           ├── frontend-service.yaml
+│           ├── backend-deployment.yaml
+│           └── backend-service.yaml
+│
+├── kubernetes/
+│   ├── kind-config.yaml
+│   └── security/
+│       └── mtls-policy.yaml
 │
 └── README.md
 ```
@@ -140,7 +155,7 @@ docker ps
 
 ## 11. Test API Endpoints
 
-Use the following commands to test both services from Windows PowerShell:
+Use the following commands to test both services from Windows PowerShell.
 
 **Frontend:**
 
@@ -191,5 +206,178 @@ Through this project, I practiced:
 
 ---
 
+# Week 2 – Helm, Service Mesh & mTLS
+
+## 1. Overview
+
+During Week 2, the frontend and backend microservices were deployed to a local Kubernetes cluster using Helm. Linkerd was integrated as the service mesh to enable secure service-to-service communication using mutual TLS (mTLS).
+
+The backend was protected using Linkerd authorization policies so that only the authorized frontend workload could access it.
+
+## 2. Technologies Used
+
+- Kubernetes
+- Kind (Kubernetes in Docker)
+- Helm
+- Linkerd Service Mesh
+- Mutual TLS (mTLS)
+- Kubernetes ServiceAccounts
+- Server and ServerAuthorization policies
+- PowerShell
+
+## 3. Kubernetes Cluster
+
+A local Kubernetes cluster was created using Kind.
+
+**Cluster name:** `week2-cluster`
+
+**Configuration file:**
+
+```text
+kubernetes/kind-config.yaml
+```
+
+The frontend and backend services were deployed inside the `microservices` namespace.
+
+## 4. Helm Implementation
+
+A Helm chart was created to manage the deployment of both microservices.
+
+**Helm chart location:**
+
+```text
+helm/microservices/
+```
+
+The chart includes:
+
+- `Chart.yaml` – Chart metadata and version.
+- `values.yaml` – Configurable deployment values.
+- `frontend-deployment.yaml` – Frontend Kubernetes Deployment.
+- `frontend-service.yaml` – Frontend Kubernetes Service.
+- `backend-deployment.yaml` – Backend Kubernetes Deployment.
+- `backend-service.yaml` – Backend Kubernetes Service.
+
+**Install the application:**
+
+```powershell
+helm install microservices ./helm/microservices --namespace microservices
+```
+
+**Validate the chart:**
+
+```powershell
+helm lint ./helm/microservices
+```
+
+**Check the release:**
+
+```powershell
+helm status microservices -n microservices
+```
+
+The Helm release was deployed successfully, and the chart passed validation.
+
+## 5. Linkerd Service Mesh
+
+Linkerd was installed to provide service mesh functionality and secure communication between the microservices.
+
+The Linkerd CRDs and control plane were installed using the Linkerd CLI.
+
+The `microservices` namespace was configured for automatic Linkerd proxy injection.
+
+Both frontend and backend pods ran with two containers:
+
+- Application container.
+- Linkerd proxy sidecar.
+
+This enabled service-to-service communication through the Linkerd service mesh.
+
+## 6. mTLS Authorization Policy
+
+A Linkerd `Server` policy was configured for the backend service on port `4000`.
+
+The backend policy uses:
+
+```yaml
+accessPolicy: deny
+```
+
+This ensures that access is denied by default unless an authorization rule allows it.
+
+A `ServerAuthorization` policy was also configured to allow access from the frontend ServiceAccount:
+
+```yaml
+client:
+  meshTLS:
+    serviceAccounts:
+      - name: frontend
+        namespace: microservices
+```
+
+**Security configuration:**
+
+- Backend access is restricted by default.
+- Frontend uses its dedicated ServiceAccount.
+- Authorized frontend-to-backend traffic is allowed.
+- Unauthorized meshed workloads are denied access.
+
+## 7. Security Verification
+
+Two tests were performed to verify the authorization policy.
+
+### Test 1: Authorized Frontend Access
+
+The frontend service accessed the backend `/info` endpoint.
+
+**Result:**
+
+```text
+HTTP: 200
+
+Response:
+{"service":"backend","description":"Backend JSON API microservice","version":"1.0.0","port":"4000"}
+```
+
+The frontend was successfully authorized to access the backend.
+
+### Test 2: Unauthorized Workload Access
+
+An unauthorized meshed workload attempted to access the backend `/info` endpoint.
+
+**Result:**
+
+```text
+HTTP/1.1 403 Forbidden
+```
+
+The unauthorized workload was successfully denied access.
+
+### Verification Summary
+
+| Test | Expected Result | Actual Result |
+|---|---|---|
+| Frontend → Backend `/info` | HTTP 200 | HTTP 200 |
+| Unauthorized workload → Backend `/info` | HTTP 403 | HTTP 403 |
+
+These results verified that the Linkerd authorization policy was working as intended.
+
+## 8. Learning Outcomes
+
+Through Week 2, I practiced:
+
+- Creating and managing Helm charts.
+- Deploying microservices to Kubernetes using Helm.
+- Working with a local Kind Kubernetes cluster.
+- Installing and configuring Linkerd.
+- Enabling automatic sidecar proxy injection.
+- Understanding service mesh architecture.
+- Configuring mTLS-based service authorization.
+- Working with Kubernetes ServiceAccounts.
+- Creating Linkerd Server and ServerAuthorization policies.
+- Testing authorized and unauthorized service communication.
+
+---
+
 **Internship:** 6-Week DevOps Internship Program  
-**Week:** 01 – Microservices & Containerization Foundation
+**Weeks Completed:** 01 and 02
