@@ -1,0 +1,12 @@
+
+apiVersion: policy.linkerd.io/v1beta3
+kind: Server
+metadata:
+  name: backend-server
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  port: 4000
+  proxyProtocol: HTTP/1
+  accessPolicy: deny

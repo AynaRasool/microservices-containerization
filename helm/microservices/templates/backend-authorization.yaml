@@ -1,0 +1,14 @@
+
+apiVersion: policy.linkerd.io/v1beta1
+kind: ServerAuthorization
+metadata:
+  name: frontend-to-backend
+  namespace: microservices
+spec:
+  server:
+    name: backend-server
+  client:
+    meshTLS:
+      serviceAccounts:
+        - name: frontend
+          namespace: microservices

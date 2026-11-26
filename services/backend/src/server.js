@@ -13,14 +13,13 @@ app.get("/health", (req, res) => {
 });
 
 // Service information endpoint
-app.get("/info", (req, res) => {
-    res.status(200).json({
-        service: "backend",
-        description: "Backend JSON API microservice",
-        version: "1.0.0",
-        port: PORT
-    });
+res.status(200).json({
+    service: "backend",
+    description: "Backend JSON API microservice",
+    version: "1.0.0",
+    port: PORT
 });
+
 
 // Start server
 app.listen(PORT, "0.0.0.0", () => {

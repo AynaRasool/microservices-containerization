@@ -13,6 +13,7 @@ app.get("/health", (req, res) => {
 });
 
 // Service information endpoint
+// Service information endpoint
 app.get("/info", (req, res) => {
     res.status(200).json({
         service: "frontend",
