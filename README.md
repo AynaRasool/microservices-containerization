@@ -210,7 +210,7 @@ Through this project, I practiced:
 
 ## 1. Overview
 
-During Week 2, the frontend and backend microservices were deployed to a local Kubernetes cluster using Helm. Linkerd was integrated as the service mesh to enable secure service-to-service communication using mutual TLS (mTLS).
+During Week 2, the frontend and backend microservices were deployed to a local Kubernetes cluster using Helm. Linkerd was integrated as the service mesh to provide mutual TLS (mTLS) between meshed workloads and identity-based authorization for service-to-service communication.
 
 The backend was protected using Linkerd authorization policies so that only the authorized frontend workload could access it.
 
@@ -324,7 +324,7 @@ client:
 
 ## 7. Security Verification
 
-Two tests were performed to verify the authorization policy.
+Three tests were performed to verify the authorization policy.
 
 ### Test 1: Authorized Frontend Access
 
@@ -353,14 +353,83 @@ HTTP/1.1 403 Forbidden
 
 The unauthorized workload was successfully denied access.
 
-### Verification Summary
+### Test 3: Unauthorized Un-injected Workload
 
-| Test | Expected Result | Actual Result |
+A separate workload without a Linkerd proxy sidecar attempted to access the backend `/info` endpoint.
+
+**Result:**
+
+```text
+HTTP/1.1 403 Forbidden
+```
+
+The request was denied by the backend's Linkerd authorization policy.
+
+## Week 2 – Final Verification and Results
+
+### Deployment Verification
+
+The frontend and backend microservices were successfully deployed using the parameterized Helm chart.
+
+- Helm release: `microservices`
+- Namespace: `microservices`
+- Helm revision: `4`
+- Frontend deployment: Successfully rolled out
+- Backend deployment: Successfully rolled out
+- Both application pods running with Linkerd sidecars (2/2 containers ready).
+
+### Health Probes
+
+Updated Kubernetes readiness and liveness probe configurations for both services.
+
+| Setting | Value |
+|---|---|
+| Health endpoint | `/health` |
+| Probe interval | 10 seconds |
+| Probe timeout | 5 seconds |
+| Failure threshold | 3 |
+
+The probe timeout was increased from 1 to 5 seconds to improve tolerance under local cluster load.
+
+### Linkerd Service Mesh and Security
+
+Linkerd was installed using its CLI. Automatic sidecar injection was enabled for the `microservices` namespace.
+
+Configured Linkerd resources:
+
+- `Server`: backend-server
+- `ServerAuthorization`: frontend-to-backend
+- Backend access policy: deny by default
+- Authorized identity: frontend ServiceAccount in the microservices namespace
+- Authorization mechanism: Linkerd meshTLS identity-based authorization.
+
+### Security Testing Results
+
+| Test | Expected result | Actual result |
 |---|---|---|
-| Frontend → Backend `/info` | HTTP 200 | HTTP 200 |
-| Unauthorized workload → Backend `/info` | HTTP 403 | HTTP 403 |
+| Authorized frontend to backend `/info` | HTTP 200 | HTTP 200 |
+| Unauthorized meshed workload to backend | HTTP 403 | HTTP 403 |
+| Unauthorized un-injected workload to backend | HTTP 403 | HTTP 403 |
 
-These results verified that the Linkerd authorization policy was working as intended.
+The tests demonstrate successful frontend communication and denial of unauthorized access.
+The HTTP 403 responses demonstrate that unauthorized access was denied. The Linkerd meshTLS identity configuration and injected proxies provide the service-mesh security mechanism; the HTTP status codes alone are not independent proof of encrypted traffic.
+
+### Final Helm Validation
+
+- `helm lint ./helm/microservices` completed successfully.
+- Helm chart lint validation completed successfully.
+- Helm upgrade completed successfully.
+- Helm upgrade completed successfully.
+- Frontend and backend rollout status checks succeeded.
+- Linkerd overall status checks passed, with a warning about control-plane proxy version status.
+
+### Installation Note
+
+Linkerd was installed using the Linkerd CLI rather than Helm. The application microservices themselves were packaged and deployed using Helm.
+
+### Week 2 Outcome
+
+Frontend and backend microservices are managed through a parameterized Helm chart and protected using Linkerd service-mesh identity-based authorization. Authorized communication and unauthorized access-denial tests were successfully demonstrated.
 
 ## 8. Learning Outcomes
 
